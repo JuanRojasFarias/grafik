@@ -1,0 +1,79 @@
+#1
+import yfinance as yf
+
+# Crear objeto Ticker para Tesla (TSLA)
+tesla = yf.Ticker("TSLA")
+
+# Extraer datos históricos con periodo máximo
+tesla_data = tesla.history(period="max")
+
+# Reiniciar índice y mostrar primeras filas
+tesla_data.reset_index(inplace=True)
+tesla_data.head()
+#2
+import requests
+from bs4 import BeautifulSoup
+import pandas as pd
+
+# URL de ingresos de Tesla en Yahoo Finance
+url = "https://finance.yahoo.com/quote/TSLA/financials"
+
+# Obtener HTML y extraer tabla
+response = requests.get(url)
+soup = BeautifulSoup(response.text, "html.parser")
+tabla_ingresos = soup.find("div", class_="M(0) Whs(n)")
+
+# Convertir a DataFrame
+tesla_ingresos = pd.read_html(str(tabla_ingresos))[0]
+tesla_ingresos.columns = ["Concepto", "2022", "2021", "2020"]
+#3
+# Crear objeto Ticker para GameStop (GME)
+gme = yf.Ticker("GME")
+
+# Extraer datos históricos
+gme_data = gme.history(period="max")
+
+# Reiniciar índice
+gme_data.reset_index(inplace=True)
+gme_data.head()
+#4
+# URL de ingresos de GameStop
+url_gme = "https://finance.yahoo.com/quote/GME/financials"
+
+# Extraer tabla de ingresos
+response_gme = requests.get(url_gme)
+soup_gme = BeautifulSoup(response_gme.text, "html.parser")
+tabla_ingresos_gme = soup_gme.find("div", class_="M(0) Whs(n)")
+
+# Convertir a DataFrame
+gme_ingresos = pd.read_html(str(tabla_ingresos_gme))[0]
+gme_ingresos.columns = ["Concepto", "2022", "2021", "2020"]
+#5
+import matplotlib.pyplot as plt
+
+# Gráfico de precios de acciones vs ingresos
+plt.figure(figsize=(12, 6))
+plt.plot(tesla_data["Date"], tesla_data["Close"], label="Precio de Acción")
+plt.title("Tesla: Precio de Acción vs Ingresos")
+plt.xlabel("Fecha")
+plt.ylabel("Precio (USD)")
+
+# Añadir ingresos al gráfico (ejemplo simplificado)
+plt.twinx()
+plt.plot(tesla_ingresos["2022"], label="Ingresos 2022", color="red")
+plt.ylabel("Ingresos (Millones USD)")
+plt.legend()
+plt.show()
+#6
+# Gráfico para GameStop
+plt.figure(figsize=(12, 6))
+plt.plot(gme_data["Date"], gme_data["Close"], label="Precio de Acción")
+plt.title("GameStop: Precio de Acción vs Ingresos")
+plt.xlabel("Fecha")
+plt.ylabel("Precio (USD)")
+
+plt.twinx()
+plt.plot(gme_ingresos["2022"], label="Ingresos 2022", color="red")
+plt.ylabel("Ingresos (Millones USD)")
+plt.legend()
+plt.show()
