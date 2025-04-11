@@ -15,17 +15,31 @@ import requests
 from bs4 import BeautifulSoup
 import pandas as pd
 
-# URL de ingresos de Tesla en Yahoo Finance
-url = "https://finance.yahoo.com/quote/TSLA/financials"
+url = "https://www.macrotrends.net/stocks/charts/TSLA/tesla/revenue"
 
-# Obtener HTML y extraer tabla
-response = requests.get(url)
+# Simular un navegador con headers
+headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+}
+
+response = requests.get(url, headers=headers)
 soup = BeautifulSoup(response.text, "html.parser")
-tabla_ingresos = soup.find("div", class_="M(0) Whs(n)")
 
-# Convertir a DataFrame
-tesla_ingresos = pd.read_html(str(tabla_ingresos))[0]
-tesla_ingresos.columns = ["Concepto", "2022", "2021", "2020"]
+# Buscar la tabla correcta (puede haber múltiples tablas con la misma clase)
+tablas = soup.find_all("table", class_="historical_data_table")
+
+# Seleccionar la tabla de ingresos trimestrales (generalmente la segunda tabla)
+if len(tablas) >= 2:
+    tabla = tablas[1]
+    tesla_revenue = pd.read_html(str(tabla))[0]
+    tesla_revenue.columns = ["Date", "Revenue"]
+    # Limpiar y convertir datos
+    tesla_revenue["Revenue"] = tesla_revenue["Revenue"].str.replace("$", "", regex=False).str.replace(",", "", regex=False)
+    tesla_revenue = tesla_revenue.dropna()  # Eliminar filas vacías
+    tesla_revenue["Revenue"] = pd.to_numeric(tesla_revenue["Revenue"], errors="coerce")
+    print(tesla_revenue.tail())
+else:
+    print("No se encontró la tabla de ingresos.")
 #3
 # Crear objeto Ticker para GameStop (GME)
 gme = yf.Ticker("GME")
