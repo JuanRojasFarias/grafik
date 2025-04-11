@@ -80,14 +80,61 @@ plt.legend()
 plt.show()
 #6
 # Gráfico para GameStop
-plt.figure(figsize=(12, 6))
-plt.plot(gme_data["Date"], gme_data["Close"], label="Precio de Acción")
-plt.title("GameStop: Precio de Acción vs Ingresos")
-plt.xlabel("Fecha")
-plt.ylabel("Precio (USD)")
+import yfinance as yf
+import pandas as pd
+import matplotlib.pyplot as plt
+from matplotlib.widgets import RangeSlider  # <-- Use RangeSlider instead
 
-plt.twinx()
-plt.plot(gme_ingresos["2022"], label="Ingresos 2022", color="red")
-plt.ylabel("Ingresos (Millones USD)")
-plt.legend()
-plt.show()
+# ====== FETCH GAMESTOP DATA ======
+gme = yf.Ticker("GME")
+gme_data = gme.history(period="max")
+gme_data.reset_index(inplace=True)
+
+# Example revenue data (in millions USD)
+gme_revenue = pd.DataFrame({
+    "Year": [2019, 2020, 2021, 2022],
+    "Revenue": [8280, 6470, 5090, 5930]
+})
+
+# ====== PLOTTING FUNCTION ======
+def make_graph(stock_data, revenue_data, title):
+    stock_data = stock_data[stock_data["Date"].dt.year >= 2006]
+    
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(14, 8))
+    fig.suptitle(title, fontsize=16)
+    plt.subplots_adjust(bottom=0.25)
+    
+    # Stock Price Plot
+    ax1.plot(stock_data["Date"], stock_data["Close"], color="blue")
+    ax1.set_ylabel("Price (USD)", color="blue")
+    
+    # Revenue Plot
+    ax2.bar(revenue_data["Year"], revenue_data["Revenue"], color="orange")
+    ax2.set_xlabel("Year")
+    ax2.set_ylabel("Revenue (Millions USD)", color="orange")
+    
+    # Add RangeSlider (key fix)
+    ax_slider = plt.axes([0.2, 0.1, 0.6, 0.03])
+    slider = RangeSlider(
+        ax=ax_slider,
+        label="Date Range",
+        valmin=stock_data["Date"].min().timestamp(),
+        valmax=stock_data["Date"].max().timestamp(),
+        valinit=(stock_data["Date"].min().timestamp(), stock_data["Date"].max().timestamp()),
+    )
+    
+    # Update function
+    def update(val):
+        start = pd.to_datetime(val[0], unit="s")
+        end = pd.to_datetime(val[1], unit="s")
+        mask = (stock_data["Date"] >= start) & (stock_data["Date"] <= end)
+        ax1.clear()
+        ax1.plot(stock_data["Date"][mask], stock_data["Close"][mask], color="blue")
+        ax1.set_ylabel("Price (USD)", color="blue")
+        fig.canvas.draw()
+    
+    slider.on_changed(update)
+    plt.show()
+
+# ====== GENERATE GRAPH ======
+make_graph(gme_data, gme_revenue, "GameStop Stock Analysis (2006-2023)")
